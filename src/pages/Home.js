@@ -129,8 +129,8 @@ export const Home = () => {
   const [searchPeriodVal, setSearchPeriodVal] = useState("")
 
   // Task states
-  const [tasks, setTasks] = useState(JSON.parse(localStorage.getItem("LF_userData")).current)
-  const [pastTasks, setPastTasks] = useState(JSON.parse(localStorage.getItem("LF_userData")).past)
+  const [tasks, setTasks] = useState(userData ? userData.current : [])
+  const [pastTasks, setPastTasks] = useState(userData ? userData.past : [])
   const [newTaskWindow, setNewTaskWindow] = useState(false)
   const [newTaskCloseAnim, setNewTaskCloseAnim] = useState(false)
   const [selectedMedal, setSelectedMedal] = useState("bronze")
@@ -139,8 +139,6 @@ export const Home = () => {
   const [taskChecked, setTaskChecked] = useState(0)
   const [taskDone, setTaskDone] = useState(0)
   const placeHolderVal = PlaceholderProvider()
-
-  //console.log("ud", JSON.parse(localStorage.getItem("LF_userData")).current)
 
   // Statistics and activity states
   const [selectedPeriod, setSelectedPeriod] = useState("7") // needed for updating activity state
@@ -241,7 +239,6 @@ export const Home = () => {
       setTasks([{task: newTask.trim(), medal: selectedMedal, due: newTaskDue, id, done: false}, ...tasks])
       setUserData({...userData, current: [{task: newTask.trim(), medal: selectedMedal, due: newTaskDue, id, done: false}, ...userData.current]})
       setUserDataChanged(prev => prev + 1)
-      //Axios.put(`http://localhost:3001/updateUser/${userData._id}`, {...userData, current: [{task: newTask.trim(), medal: selectedMedal, due: newTaskDue, id, done: false}, ...userData.current]})
       setNewTask("")
       setSelectedMedal("bronze")
       setNewTaskDue(dayjs(dayjs().format("L")).valueOf())
@@ -321,14 +318,14 @@ export const Home = () => {
       }
     }
 
-    useEffect(() => {
+    useEffect(() => { // changing chart colors
       setCompletionRateData({...completionRateData, datasets: [{...completionRateData.datasets[0], backgroundColor: getCompletionRate(tasksForPeriod).backgroundColor}] })
       setActivityData({...activityData, datasets: [{...activityData.datasets[0], backgroundColor: getActivityData(tasksForPeriod, selectedPeriod).backgroundColor, borderColor: getActivityData(tasksForPeriod, selectedPeriod).borderColor }] })
       document.body.setAttribute("data-theme", localStorage.getItem("LF_theme") ? localStorage.getItem("LF_theme") : "light")
     }, [theme])
 
     useEffect(() => { // update user
-      if (userData._id) {
+      if (userData && userData._id) {
         localStorage.setItem("LF_userData", JSON.stringify(userData))
         Axios.put(`http://localhost:3001/updateUser/${userData._id}`, userData )
       }

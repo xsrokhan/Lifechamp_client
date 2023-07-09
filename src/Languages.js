@@ -74,7 +74,6 @@ export const Languages = () => {
     function setFlagsFunc() {
       let selected = langs.find(l => l.name === lang.slice(-2))
       let filtered = langs.filter(l => l.name !== lang.slice(-2))
-      console.log(selected)
       return [...filtered, selected]
     }
   

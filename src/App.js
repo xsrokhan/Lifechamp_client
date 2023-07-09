@@ -12,8 +12,8 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
-      <Navbar />
-      <Home />
+        <Navbar />
+        <Home />
       </BrowserRouter>
     </div>
   );

@@ -31,7 +31,6 @@ export const Tasks = ({ tasks, setTasks, userData, setUserData, pastTasks, setPa
       setTaskDone(prev => prev + 1)
       setUserData({...userData, medals: {...userData.medals, [medal]: userData.medals[medal] + 1}, current: [...tasksCopy], past: [taskClone, ...userData.past]})
       setUserDataChanged(prev => prev + 1)
-      //Axios.put(`http://localhost:3001/updateUser/${userData._id}`, {...userData, medals: {...userData.medals, [medal]: userData.medals[medal] + 1}, current: [...tasksCopy]})
     }, 500)
   }
 
