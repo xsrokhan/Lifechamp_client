@@ -1,5 +1,6 @@
 {
   "name": "lifechamp_client",
+  "homepage": "http://lifechamp.net",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
