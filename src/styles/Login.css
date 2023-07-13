@@ -19,7 +19,7 @@
   --hamburger-menu-body: #E4E6eB;
 }
 
-*:not(li, abbr) {
+*:not(li, abbr, .question-container) {
   transition: all 0.5s ease-in-out;
 }
 

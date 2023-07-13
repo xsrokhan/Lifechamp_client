@@ -62,7 +62,7 @@ export const FAQ = () => {
           key={i}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, ease: "easeOut", delay: i * 0.2 }}
+          transition={{ duration: 1, delay: i * 0.2 }}
           >
             <div className={`question ${i + 1 + ""}`} onClick={handleState}>{a.question}</div>
             <div className="answer-container" aria-hidden={state[i + 1 + ""]}>

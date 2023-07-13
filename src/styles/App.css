@@ -1,5 +1,4 @@
 html {
-  overflow: hidden;
   height: 100%;
 }
 
@@ -9,6 +8,10 @@ body {
   background-color: var(--body-bg);
   transition: all 0.4s ease-in-out;
   min-width: 280px;
+}
+
+body::-webkit-scrollbar {
+  display: none;
 }
 
 .navbar {
@@ -90,6 +93,23 @@ body {
 @keyframes forArrow {
   from {transform:scale(0)}
   to {transform:scale(1)}
+}
+
+@media screen and (max-height: 900px) {
+  .navbar {
+    height: 60px;
+  }
+  .navbar:nth-child(1) > svg {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  .grid li img {
+    width: 16px;
+    height: 16px;
+  }
+  .fa-caret-down {
+    right: -3%;
+  }
 }
 
 @media screen and (max-width: 355px) {

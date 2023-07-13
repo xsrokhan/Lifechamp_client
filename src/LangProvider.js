@@ -9,7 +9,7 @@ export const PlaceholderProvider = () => {
         "LF_ru": "Новое задание...",
         "LF_ar": "...مهمة جديدة",
         "LF_az": "Yeni tapşırıq...",
-        "LF_sp": "Новое задание...",
+        "LF_sp": "Nueva tarea...",
         "LF_fr": "Nouvelle tâche...",
         "LF_fa": "...کار جدید",
         "LF_tr": "Yeni görev...",

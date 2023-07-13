@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FaTrashAlt } from "react-icons/fa"
+import { FaMedal } from "react-icons/fa"
 import { Context } from '../Context'
 import { LangProvider } from '../LangProvider'
 require('dayjs/locale/ar-sa')
@@ -21,15 +22,16 @@ export const Tasks = ({ tasks, setTasks, userData, setUserData, pastTasks, setPa
     taskClone.due = dayjs(dayjs().format("L")).valueOf()
     // getting rid of unnecessary properties for completed tasks
     delete taskClone.id
-    delete taskClone.expired
     delete taskClone.checked
-    setPastTasks([taskClone, ...pastTasks])
+    delete taskClone.expired
+    delete taskClone.addedToPast
+    setPastTasks([...pastTasks, taskClone])
     setTasks([...tasks]) // render the line-through
     const timeout = setTimeout(() => { 
       const tasksCopy = tasks.filter((_, idx) => idx !== i)
       setTasks([...tasksCopy])
       setTaskDone(prev => prev + 1)
-      setUserData({...userData, medals: {...userData.medals, [medal]: userData.medals[medal] + 1}, current: [...tasksCopy], past: [taskClone, ...userData.past]})
+      setUserData({...userData, medals: {...userData.medals, [medal]: userData.medals[medal] + 1}, current: [...tasksCopy], past: [...userData.past, taskClone,]})
       setUserDataChanged(prev => prev + 1)
     }, 500)
   }
@@ -39,7 +41,6 @@ export const Tasks = ({ tasks, setTasks, userData, setUserData, pastTasks, setPa
     setTasks([...tasksCopy])
     setUserData({...userData, current: [...tasksCopy]})
     setUserDataChanged(prev => prev + 1)
-    //Axios.put(`http://localhost:3001/updateUser/${userData._id}`, {...userData, current: [...tasksCopy]})
   }
 
   function getDate(arg) {
@@ -56,7 +57,7 @@ export const Tasks = ({ tasks, setTasks, userData, setUserData, pastTasks, setPa
 
   return (
     <>
-      <ul className="tasks-ul" style={{justifyContent: tasks.length ? "flex-start" : "center"}}>
+      <ul className="tasks-ul" style={{justifyContent: tasks.length ? "flex-start" : "center", paddingLeft: tasks.length ? "1.1rem" : ""}}>
         {tasks.length > 0 && <AnimatePresence>
           {tasks.map((task, i) => (
             <motion.li key={task.id}
@@ -66,7 +67,7 @@ export const Tasks = ({ tasks, setTasks, userData, setUserData, pastTasks, setPa
               layout
             >
               <div style={{ textDecoration: tasks.find(a => a.id === task.id).done ? "line-through" : "none", textAlign: lang === "LF_ar" || lang === "LF_fa" ? "right" : "left" }}>{task.task}</div>
-              <button disabled={!tasks.find(a => a.id === task.id).checked} onClick={() => done(i, task.id)}>Done</button>
+              <button disabled={!tasks.find(a => a.id === task.id).checked} onClick={() => done(i, task.id)}><FaMedal /></button>
               <div className={task.medal}></div>
               <div style={{color: tasks.find(a => a.id === task.id).expired && "firebrick"}}>{getDate(task.due)}</div>
               <FaTrashAlt onClick={() => remove(i)}/>

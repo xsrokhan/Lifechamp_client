@@ -50,7 +50,7 @@ export function ReactCalendar({newTaskDue}) {
         new Date(value.split('T')[0]).toISOString().split('T')[0] : // initial value
         new Date(dayjs(value).format().split('T')[0]).toISOString().split('T')[0]
         if (
-          date.toISOString().split('T')[0] === currentVal
+          new Date(dayjs(date).format().split('T')[0]).toISOString().split('T')[0] === currentVal
         )
           return 'react-calendar__tile_selected'
       }}

@@ -10,9 +10,9 @@
     display: flex;
     width: 100%;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
     padding-top: 1rem;
-    height: 3rem;
+    min-height: 2.5rem;
 }
 
 .medals {
@@ -129,7 +129,7 @@
     height: 1rem;
 }
 
-.underline {
+.sidebar > .active {
     border-bottom: 1px solid var(--button-color);
 }
 
@@ -187,6 +187,9 @@
     width: 1.2rem;
     height: 1.2rem;
   }
+  .open-sb-and-medals {
+    align-items: center;
+}
 }
 
 /* Tasks styles */
@@ -200,7 +203,7 @@
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    height: 30.5rem;
+    height: 30rem;
     max-height: 40rem;
     overflow-y: auto;
     animation: fadeIn 1s;
@@ -227,12 +230,15 @@
   }
 
   .tasks-ul li > button {
+    display: grid;
+    place-items: center;
     border-radius: 5px;
-    padding: 0.5rem;
+    padding: 0.5rem 1rem 0.5rem 1rem;
     color: var(--button-color);
     background-color: var(--navbar-btn-bg);
     border: none;
     cursor: pointer;
+    font-size: 1rem;
   }
 
   .tasks-ul li > button:disabled {
@@ -374,9 +380,10 @@
   .new-task-overlay {
     position: absolute;
     width: 100%;
-    height: 100vh;
+    height: 104.3%;
     background: rgba(0, 0, 0, 0.5);
     top: 0;
+    bottom: 0;
     z-index: 100;
     animation: fadeIn 0.5s;
   }
@@ -385,6 +392,7 @@
     position: absolute;
     display: flex;
     flex-direction: column;
+    gap: 0.5rem;
     align-items: center;
     justify-content: space-evenly;
     width: 30rem;
@@ -416,6 +424,7 @@
     justify-content: space-evenly;
     text-align: center;
     flex-wrap: wrap;
+    margin-bottom: 0.5rem;
   }
 
   .new-task-medals > .reward {
@@ -445,7 +454,7 @@
   .close-new-task {
     position: absolute;
     right: 3%;
-    top: 1.3%;
+    top: 1.2%;
     color: var(--navbar-btn-bg);
     font-size: 1.5rem;
     cursor: pointer;
@@ -500,6 +509,13 @@
     .new-task-window {
       width: 25rem;
       height: 30rem;
+    }
+    .new-task-window > .add-task-btn {
+      padding: 0.4rem 1.3rem 0.4rem 1.3rem;
+      font-size: 1rem;
+    }
+    .close-new-task {
+      font-size: 1.1rem;
     }
   }
 
@@ -580,10 +596,19 @@
   transform: rotateY(0deg);
 }
 
-@media screen and (max-width: 500px) {
+@media screen and (max-width: 540px) {
   .piechart-container {
-    width: 15rem;
-    height: 15rem;
+    width: 12rem;
+    height: 12rem;
+  }
+  .piechart-and-btn-container > button {
+    width: 7%;
+    padding: 0.3rem 1.7rem 0.3rem 1.7rem;
+  }
+  .piechart-and-btn-container > button > svg {
+    color: var(--button-color);
+    height: 1.2rem;
+    width: 1.2rem;
   }
 }
 
@@ -591,10 +616,6 @@
   .piechart-container {
     width: 10rem;
     height: 10rem;
-  }
-  .piechart-and-btn-container > button {
-    width: 7%;
-    padding: 0.3rem 1.7rem 0.3rem 1.7rem;
   }
 }
 
@@ -830,6 +851,7 @@
   border-radius: 5px;
   border: 1px solid var(--navbar-btn-bg);
   max-width: 6rem;
+  padding: 0 0.2rem 0 0
 }
 
 .searchPeriod > .searchPeriod-input-wrapper > input {
@@ -839,6 +861,7 @@
   border: none;
   font-size: 1.1rem;
   background-color: var(--body-bg);
+  height: 65%;
   color: var(--regular-text);
 }
 
@@ -866,10 +889,15 @@
   cursor: pointer;
 }
 
+.searchPeriod button:disabled {
+  background-color: grey;
+  pointer-events: none;
+}
+
 /* New task button */
 .new-task {
   position: absolute;
-  right: 1.2rem;
+  right: 1.5rem;
   bottom: 0.5rem;
   display: grid;
   place-content: center;
@@ -899,7 +927,7 @@
   .new-task {
     width: 2rem;
     height: 2rem;
-    right: 0.6rem;
+    right: 1rem;
   }
 }
 

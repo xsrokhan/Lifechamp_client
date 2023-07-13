@@ -4,7 +4,7 @@ import { LangProvider } from '../LangProvider'
 import '../styles/Login.css'
 import Axios from 'axios'
 
-export const Login = ({ loggedIn, userData }) => {
+export const Login = ({ loggedIn, setUserData, setTasks, setPastTasks }) => {
     const [loginPage, setLoginPage] = useState(true)
     const [registered, setRegistered] = useState(false)
     const [loginCredentials, setLoginCredentials] = useState({ username: "", password: "" })
@@ -52,11 +52,12 @@ export const Login = ({ loggedIn, userData }) => {
             setUserExists(false)
             setRegistered(false)
         } else {
-            Axios.post("http://localhost:3001/createUser", { password, username, current: [], past: [], medals: {"gold": 0, "silver": 0, "bronze": 0} })
+            Axios.post("https://lifechampserver-production.up.railway.app/createUser", { password, username, current: [], past: [], medals: {"gold": 0, "silver": 0, "bronze": 0} })
             .then(res => {
                 setRegistered(true)
                 setValidCredential(true)
                 setUserExists(false)
+                setUserNotFound(false)
                 setRegisterCredentials({ username: "", password: "" })
             })
             .catch(err => {
@@ -71,7 +72,7 @@ export const Login = ({ loggedIn, userData }) => {
 
     function login() {
         const { username, password } = loginCredentials
-        Axios.post("http://localhost:3001/getUser", { username, password }).then(res => { userData(res.data); localStorage.setItem("LF_userData", JSON.stringify(res.data)) })
+        Axios.post("https://lifechampserver-production.up.railway.app/getUser", { username, password }).then(res => { setUserData(res.data); setTasks(res.data.current); setPastTasks(res.data.past); localStorage.setItem("LF_userData", JSON.stringify(res.data)) })
         .then(() => {setUserNotFound(false); setLoginAnimation(true); loggedInTimeout()})
         .catch(err => {
             const msg = err.response.data.message

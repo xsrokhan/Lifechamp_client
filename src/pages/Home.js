@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useContext } from 'react'
 import Axios from 'axios'
 import { Login } from './Login'
 import { Tasks } from './Tasks'
@@ -12,7 +12,7 @@ import { ReactCalendar } from '../Calendar'
 import { LangProvider } from '../LangProvider'
 import { PlaceholderProvider } from '../LangProvider'
 import '../styles/Home.css'
-import { Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { FaBars } from "react-icons/fa"
 import { FaTasks } from "react-icons/fa"
 import { FaChartPie } from "react-icons/fa"
@@ -63,6 +63,7 @@ function getCompletionRate(pastTasks) {
   let complete = 0
   let incomplete = 0
   let completionColor = document.querySelector("body").getAttribute("data-theme") === "dark" ? "#5d738b" : "#944747"
+  pastTasks.forEach(task => task.done === "false" ? task.done = false : task.done) // temp measure for testing with manual db input
   pastTasks.forEach(task => task.done ? complete++ : incomplete++)
   complete = complete * 100 / total
   incomplete = incomplete * 100 / total
@@ -124,13 +125,15 @@ export const Home = () => {
   // Login and page states
   const { loggedIn, setLoggedIn } = useContext(Context)
   const [logoutAnimation, setLogoutAnimation] = useState(false)
-  const { selectedSection, setSelectedSection } = useContext(Context)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 1050  ? true : false)
+  const [smallScreen, setSmallScreen] = useState(window.innerWidth < 1050  ? true : false)
   const [searchPeriodVal, setSearchPeriodVal] = useState("")
+  const [expiryCheckPerformed, setExpiryCheckPerformed] = useState(0)
+  const location = useLocation().pathname
 
   // Task states
-  const [tasks, setTasks] = useState(userData ? userData.current : [])
-  const [pastTasks, setPastTasks] = useState(userData ? userData.past : [])
+  const [tasks, setTasks] = useState(userData ? [...userData.current.slice()] : [])
+  const [pastTasks, setPastTasks] = useState(userData ? [...userData.past.slice()] : [])
   const [newTaskWindow, setNewTaskWindow] = useState(false)
   const [newTaskCloseAnim, setNewTaskCloseAnim] = useState(false)
   const [selectedMedal, setSelectedMedal] = useState("bronze")
@@ -192,46 +195,56 @@ export const Home = () => {
     }]
   })
 
-  function checkIfExpired() {
+  // Highlights state
+  const [highlights, setHighlights] = useState(tasksForPeriod)
+  console.log(userData.current)
+  function expiryCheck() { 
     let oneDay = 86400000
     let currentTime = dayjs().valueOf()
     tasks.forEach(task => {
-      if (currentTime > task.due + oneDay) { // task.due (00:00) + oneDay = end of day
+      if (currentTime > +task.due + oneDay) { // task.due (00:00) + oneDay = end of day
         task.expired = true
       }
     })
-    let expiredTasks = tasks.filter(task => task.expired === true)
+    let expiredTasks = tasks.filter(task => task.expired === true && !task.addedToPast)
+    let expiredTasksArray = []
     expiredTasks.forEach(task => {
-      delete task.id
-      delete task.expired
+      let clone = {...task}
+      delete clone.id
+      delete clone.checked
+      delete clone.expired
+      delete clone.medal
+      expiredTasksArray.push(clone)
     })
-    setTasks([...tasks])
-    setPastTasks([...expiredTasks, ...pastTasks])
-    setUserData({...userData, past: [...expiredTasks, ...pastTasks]})
+    if (expiredTasksArray.length) {
+      setPastTasks([...pastTasks, ...expiredTasksArray])
+      setTasksForPeriod(getTasksForPeriod([...pastTasks, ...expiredTasksArray], selectedPeriod))
+      setUserData({...userData, past: [...userData.past, ...expiredTasksArray]})
+      tasks.forEach(task => {if (task.expired) task.addedToPast = true})
+      setTasks([...tasks])
+      setUserDataChanged(prev => prev + 1)
+      setExpiryCheckPerformed(prev => prev + 1)
+    }
   }
 
-  useEffect(() => { // check if there are expired tasks on load and input check
-    checkIfExpired()
-  }, [taskChecked])
+  useEffect(() => { // check if there are expired tasks on login and input check
+    if (loggedIn) {
+      expiryCheck()
+    }
+  }, [taskChecked, loggedIn])
 
   useEffect(() => { 
     setTasksForPeriod(getTasksForPeriod(pastTasks, selectedPeriod))
   }, [pastTasks])
 
-  useEffect(() => { 
+  useEffect(() => { // update charts after completing a task
     applyPeriod()
-  }, [taskDone])
+}, [taskDone])
 
   function logout() {
     setLogoutAnimation(true)
-    let timer = setTimeout(() => {setLoggedIn(false); localStorage.setItem("LF_loggedIn", "false"); setLogoutAnimation(false); setSelectedSection("tasks"); sessionStorage.setItem("LF_selectedSection", "tasks"); setSelectedPeriod(7); setNewTaskDue(dayjs().valueOf())}, 400)
+    let timer = setTimeout(() => {setLoggedIn(false); localStorage.clear(); setLogoutAnimation(false); sessionStorage.setItem("LF_selectedSection", "tasks"); setSelectedPeriod(7); setNewTaskDue(dayjs().valueOf())}, 400)
     return () => clearTimeout(timer)
-  }
-
-  function underlineSelected(e) {
-    let section = e.target.name
-    setSelectedSection(section)
-    sessionStorage.setItem("LF_selectedSection", section)
   }
 
   function addNewTask() {
@@ -254,6 +267,7 @@ export const Home = () => {
 
   function applyPeriod() {
     setPieChartTasks(tasksForPeriod)
+    setHighlights(tasksForPeriod)
     setCompletionRateData({
       labels: null, // changes according to the language in Statistics
       datasets: [{
@@ -302,8 +316,19 @@ export const Home = () => {
     })
     }
 
+    useEffect(() => { // updates charts on login after expiry check
+        applyPeriod()
+        console.log(userData)
+    }, [expiryCheckPerformed])
+
+    useEffect(() => { // reset charts to the default search period of the past 7 days
+      if (!searchPeriodVal) {
+        applyPeriod()
+      }
+    }, [searchPeriodVal])
+
     function setPeriod(e) {
-      if (!e.target.value || e.target.value[0] === "0") {
+      if (!e.target.value || e.target.value[0] === "0" || !Number(e.target.value)) {
         setTasksForPeriod(getTasksForPeriod(pastTasks, "7"))
         setSelectedPeriod("7")
         setSearchPeriodVal("")
@@ -325,15 +350,40 @@ export const Home = () => {
     }, [theme])
 
     useEffect(() => { // update user
-      if (userData && userData._id) {
+      if (loggedIn && userData && userData._id) {
         localStorage.setItem("LF_userData", JSON.stringify(userData))
-        Axios.put(`http://localhost:3001/updateUser/${userData._id}`, userData )
+        Axios.get(`https://lifechampserver-production.up.railway.app/validID/${userData._id}`).then(res => Axios.put(`https://lifechampserver-production.up.railway.app/updateUser/${userData._id}`, userData )).catch(err => {setLoggedIn(false); localStorage.clear()})
       }
     }, [userDataChanged])
 
+    useEffect(() => { // if userData doesn't exist, e.g. removed manually in localStorage
+      if (loggedIn && !userData) {
+        setLoggedIn(false)
+        localStorage.clear()
+      }
+    }, [])
+
+    useEffect(() => {
+      const debouncedHandleResize = debounce(() => {
+        if (window.innerWidth < 1050) {
+          setSidebarCollapsed(true)
+          setSmallScreen(true)
+        } else {
+          setSidebarCollapsed(false)
+          setSmallScreen(false)
+        }
+      }, 500)
+  
+      window.addEventListener("resize", debouncedHandleResize);
+  
+      return () => { // cleaning up
+        window.removeEventListener("resize", debouncedHandleResize);
+      }
+    })
+
   return (
     <>
-      {!loggedIn && <Login loggedIn={setLoggedIn} userData={setUserData} />}
+      {!loggedIn && <Login loggedIn={setLoggedIn} setUserData={setUserData} setTasks={setTasks} setPastTasks={setPastTasks} />}
       {loggedIn && userData &&
 
         <div className={`home ${logoutAnimation ? "fade-out" : ""}`}>
@@ -344,7 +394,7 @@ export const Home = () => {
             <AddTask>
               <div className={`new-task-overlay ${newTaskCloseAnim ? "fade-out" : ""}`}>
                 <div className={`new-task-window ${newTaskCloseAnim ? "close-new-task-anim" : ""}`}>
-                  <span className="close-new-task" onClick={handleCloseNewTask}>&#10006;</span>
+                  <span className="close-new-task" onClick={handleCloseNewTask}>&#10006;&#xFE0E;</span>
                   <textarea onChange={(e) => setNewTask(e.target.value)} value={newTask} placeholder={placeHolderVal} maxLength="70" style={{textAlign: lang === "LF_ar" || lang === "LF_fa" ? "right" : "left"}}></textarea>
                   <div className="new-task-medals">
                     <div className="reward"><LangProvider location="reward"/></div>
@@ -359,18 +409,15 @@ export const Home = () => {
             </AddTask>}
 
           
-
-          
-
           <div className={`sidebar ${sidebarCollapsed || logoutAnimation ? "collapsed" : ""}`}>
             <div className="collapse-sidebar"><FaBars onClick={() => setSidebarCollapsed(true)} /></div>
             <div className="username">{userData.username}</div>
-            <Link className={`sidebar-section ${selectedSection === "tasks" ? "underline" : ""}`} name="tasks" to="/" onClick={underlineSelected}><FaTasks /><LangProvider location="tasks"/></Link>
-            <Link className={`sidebar-section ${selectedSection === "statistics" ? "underline" : ""}`} name="statistics" to="/statistics" onClick={underlineSelected}><FaChartPie /><LangProvider location="stats"/></Link>
-            <Link className={`sidebar-section ${selectedSection === "activity" ? "underline" : ""}`} name="activity" to="/activity" onClick={underlineSelected}><FaChartLine /><LangProvider location="activity"/></Link>
-            <Link className={`sidebar-section ${selectedSection === "highlights" ? "underline" : ""}`} name="highlights" to="/highlights" onClick={underlineSelected}><FaMedal /><LangProvider location="highlights"/></Link>
-            <Link className={`sidebar-section ${selectedSection === "settings" ? "underline" : ""}`} name="settings" to="/profile" onClick={underlineSelected}><FaUser /><LangProvider location="profile"/></Link>
-            <Link className={`sidebar-section ${selectedSection === "faq" ? "underline" : ""}`} name="faq" to="/faq" onClick={underlineSelected}><FaQuestion />FAQ</Link>
+            <Link className={`sidebar-section ${location === "/" ? "active" : ""}`} to="/" onClick={() => {if (smallScreen) setSidebarCollapsed(true)}}><FaTasks /><LangProvider location="tasks"/></Link>
+            <Link className={`sidebar-section ${location === "/statistics" ? "active" : ""}`} to="/statistics" onClick={() => {if (smallScreen) setSidebarCollapsed(true)}}><FaChartPie /><LangProvider location="stats"/></Link>
+            <Link className={`sidebar-section ${location === "/activity" ? "active" : ""}`} to="/activity" onClick={() => {if (smallScreen) setSidebarCollapsed(true)}}><FaChartLine /><LangProvider location="activity"/></Link>
+            <Link className={`sidebar-section ${location === "/highlights" ? "active" : ""}`} to="/highlights" onClick={() => {if (smallScreen) setSidebarCollapsed(true)}}><FaMedal /><LangProvider location="highlights"/></Link>
+            <Link className={`sidebar-section ${location === "/profile" ? "active" : ""}`} to="/profile" onClick={() => {if (smallScreen) setSidebarCollapsed(true)}}><FaUser /><LangProvider location="profile"/></Link>
+            <Link className={`sidebar-section ${location === "/faq" ? "active" : ""}`} to="/faq" onClick={() => {if (smallScreen) setSidebarCollapsed(true)}}><FaQuestion />FAQ</Link>
             <div className="sidebar-section" onClick={logout}><SlLogout /><LangProvider location="logout"/></div>
           </div>
 
@@ -403,23 +450,23 @@ export const Home = () => {
               <Route path="/" element={<Tasks tasks={tasks} setTasks={setTasks} userData={userData} setUserData={setUserData} pastTasks={pastTasks} setPastTasks={setPastTasks} setTaskChecked={setTaskChecked} setTaskDone={setTaskDone} setUserDataChanged={setUserDataChanged} />} />
               <Route path="/statistics" element={<Statistics completionRateData={completionRateData} medalsData={medalsData} tasksForPeriod={pieChartTasks} medalsEarned={medalsEarned} />} />
               <Route path="/activity" element={<Activity chartData={activityData} />} />
-              <Route path="/highlights" element={<Highlights highlights={tasksForPeriod.filter(task => (task.done && task.medal !== "bronze"))} />} />
+              <Route path="/highlights" element={<Highlights highlights={highlights.filter(task => (task.done && task.medal !== "bronze"))} />} />
               <Route path="/profile" element={<Profile userData={userData} setUserData={setUserData} />} />
               <Route path="/faq" element={<FAQ />} />
             </Routes>
 
             <div className="bottom-controls">
-            {(selectedSection === "statistics" || selectedSection === "activity" || selectedSection === "highlights") && 
+            {(location === "/statistics" || location === "/activity" || location === "/highlights") && 
             <div className="searchPeriod">
               <div className="searchPeriod-input-wrapper">
                 <input type="number" placeholder="7" onChange={setPeriod} value={searchPeriodVal} />
                 <span><LangProvider location="day" searchPeriodVal={searchPeriodVal}/></span>
               </div>
-              <button onClick={applyPeriod}><FaSearch /></button>
+              <button onClick={applyPeriod} disabled={!searchPeriodVal}><FaSearch /></button>
             </div>
           }
 
-            {(selectedSection !== "statistics" && selectedSection !== "activity" && selectedSection !== "highlights") && 
+            {(location !== "/statistics" && location !== "/activity" && location !== "/highlights") && 
             <div className="flexbox-placeholder"></div>}
 
             <div className="new-task" onClick={() => {setNewTaskWindow(true)}}>+</div>
@@ -430,4 +477,15 @@ export const Home = () => {
       }
     </>
   )
+}
+
+function debounce(fn, delay) {
+  let timer
+  return () => {
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      timer = null
+      fn.apply(this, arguments)
+    }, delay)
+  }
 }

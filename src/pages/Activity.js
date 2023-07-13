@@ -11,7 +11,7 @@ dayjs.extend(localizedFormat)
 
 export const Activity = ({chartData}) => {
   const { theme, lang } = useContext(Context)
-  console.log(lang)
+
   const [options, setOptions] = useState({
     scales: {
       x: {
