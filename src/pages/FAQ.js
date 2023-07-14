@@ -55,6 +55,7 @@ export const FAQ = () => {
   ]
   
   return (
+    <div className="faq-outermost-container">
     <div className="faq-outer-container">
       <div className="faq-container">
         {faq.map((a, i) => (
@@ -71,6 +72,7 @@ export const FAQ = () => {
           </motion.div>
         ))}
       </div>
+    </div>
     </div>
   )
 }

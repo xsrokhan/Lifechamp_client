@@ -752,16 +752,19 @@
 }
 
 /* FAQ styles */
-.faq-outer-container {
+.faq-outermost-container {
   height: 100%;
-  width: 30rem;
   display: flex;
-  align-items: center;
-  overflow-y: auto;
+  align-items: flex-end;
+  justify-content: center;
+  overflow-y: hidden;
 }
 
-.faq-outer-container > div:nth-child(1) {
-  margin-top: 1.5rem;
+.faq-outer-container {
+  height: 80%;
+  width: 30rem;
+  display: flex;
+  overflow-y: auto;
 }
 
 .faq-container {
@@ -803,6 +806,7 @@
 @media screen and (max-width: 800px) {
   .faq-outer-container {
     width: 20rem;
+    height: 90%
   }
   .question-container > .question, .answer-container > div {
     font-size: 1.2rem;
@@ -819,7 +823,6 @@
 }
 
 /* Bottom controls */
-
 .bottom-controls {
   display: flex;
   width: 100%;

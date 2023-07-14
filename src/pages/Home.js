@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import Axios from 'axios'
 import { Login } from './Login'
 import { Tasks } from './Tasks'
@@ -132,8 +132,8 @@ export const Home = () => {
   const location = useLocation().pathname
 
   // Task states
-  const [tasks, setTasks] = useState(userData ? [...userData.current.slice()] : [])
-  const [pastTasks, setPastTasks] = useState(userData ? [...userData.past.slice()] : [])
+  const [tasks, setTasks] = useState(loggedIn && userData ? JSON.parse(JSON.stringify(userData.current)) : [])
+  const [pastTasks, setPastTasks] = useState(loggedIn && userData ? JSON.parse(JSON.stringify(userData.past)) : [])
   const [newTaskWindow, setNewTaskWindow] = useState(false)
   const [newTaskCloseAnim, setNewTaskCloseAnim] = useState(false)
   const [selectedMedal, setSelectedMedal] = useState("bronze")
@@ -197,7 +197,7 @@ export const Home = () => {
 
   // Highlights state
   const [highlights, setHighlights] = useState(tasksForPeriod)
-  console.log(userData.current)
+  
   function expiryCheck() { 
     let oneDay = 86400000
     let currentTime = dayjs().valueOf()
@@ -219,12 +219,12 @@ export const Home = () => {
     if (expiredTasksArray.length) {
       setPastTasks([...pastTasks, ...expiredTasksArray])
       setTasksForPeriod(getTasksForPeriod([...pastTasks, ...expiredTasksArray], selectedPeriod))
-      setUserData({...userData, past: [...userData.past, ...expiredTasksArray]})
       tasks.forEach(task => {if (task.expired) task.addedToPast = true})
+      setUserData({...userData, current: [...tasks], past: [...userData.past, ...expiredTasksArray]})
       setTasks([...tasks])
       setUserDataChanged(prev => prev + 1)
-      setExpiryCheckPerformed(prev => prev + 1)
     }
+    setExpiryCheckPerformed(prev => prev + 1)
   }
 
   useEffect(() => { // check if there are expired tasks on login and input check
@@ -318,7 +318,6 @@ export const Home = () => {
 
     useEffect(() => { // updates charts on login after expiry check
         applyPeriod()
-        console.log(userData)
     }, [expiryCheckPerformed])
 
     useEffect(() => { // reset charts to the default search period of the past 7 days
