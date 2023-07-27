@@ -121,6 +121,7 @@ export const Home = () => {
   // User data state
   const { userData, setUserData } = useContext(Context)
   const [userDataChanged, setUserDataChanged] = useState(0)
+  const [userDataChangedTracker, setUserDataChangedTracker] = useState(0)
 
   // Login and page states
   const { loggedIn, setLoggedIn } = useContext(Context)
@@ -243,7 +244,7 @@ export const Home = () => {
 
   function logout() {
     setLogoutAnimation(true)
-    let timer = setTimeout(() => {setLoggedIn(false); localStorage.clear(); setLogoutAnimation(false); sessionStorage.setItem("LF_selectedSection", "tasks"); setSelectedPeriod(7); setNewTaskDue(dayjs().valueOf())}, 400)
+    let timer = setTimeout(() => {setLoggedIn(false); sessionStorage.clear(); setLogoutAnimation(false); sessionStorage.setItem("LF_selectedSection", "tasks"); setSelectedPeriod(7); setNewTaskDue(dayjs().valueOf())}, 400)
     return () => clearTimeout(timer)
   }
 
@@ -348,17 +349,29 @@ export const Home = () => {
       document.body.setAttribute("data-theme", localStorage.getItem("LF_theme") ? localStorage.getItem("LF_theme") : "light")
     }, [theme])
 
-    useEffect(() => { // update user
-      if (loggedIn && userData && userData._id) {
-        localStorage.setItem("LF_userData", JSON.stringify(userData))
-        Axios.get(`https://lifechampserver-production.up.railway.app/validID/${userData._id}`).then(res => Axios.put(`https://lifechampserver-production.up.railway.app/updateUser/${userData._id}`, userData )).catch(err => {setLoggedIn(false); localStorage.clear()})
+    useEffect(() => { // update user on change
+      if (loggedIn && userData && userData._id && (userDataChangedTracker !== userDataChanged)) {
+        sessionStorage.setItem("LF_userData", JSON.stringify(userData))
+        Axios.get(`https://lifechampserver-production.up.railway.app/validID/${userData._id}`)
+        .then(res => Axios.put(`https://lifechampserver-production.up.railway.app/updateUser/${userData._id}`, userData ))
+        .catch(err => {setLoggedIn(false); sessionStorage.clear()})
+        setUserDataChangedTracker(userDataChanged)
       }
     }, [userDataChanged])
 
-    useEffect(() => { // if userData doesn't exist, e.g. removed manually in localStorage
+    useEffect(() => { // update on render, e.g. if updated on another device
+      if (loggedIn && userData && userData._id && (userDataChangedTracker === userDataChanged)) {
+        const { username, password } = userData
+        Axios.post("https://lifechampserver-production.up.railway.app/getUser", { username, password })
+        .then(res => { setUserData(res.data); setTasks(res.data.current); setPastTasks(res.data.past); sessionStorage.setItem("LF_userData", JSON.stringify(res.data)) })
+        .catch(err => {setLoggedIn(false); sessionStorage.clear()})
+      }
+    }, [])
+
+    useEffect(() => { // if userData doesn't exist, e.g. removed manually in storage
       if (loggedIn && !userData) {
         setLoggedIn(false)
-        localStorage.clear()
+        sessionStorage.clear()
       }
     }, [])
 

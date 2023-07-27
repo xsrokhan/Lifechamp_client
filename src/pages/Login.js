@@ -28,7 +28,7 @@ export const Login = ({ loggedIn, setUserData, setTasks, setPastTasks }) => {
     }, [registered])
 
     function loggedInTimeout () {
-        let timer = setTimeout(() => {loggedIn(true); localStorage.setItem("LF_loggedIn", "true")}, 1300)
+        let timer = setTimeout(() => {loggedIn(true); sessionStorage.setItem("LF_loggedIn", "true")}, 1300)
         return () => clearTimeout(timer)  
     }
 
@@ -72,7 +72,7 @@ export const Login = ({ loggedIn, setUserData, setTasks, setPastTasks }) => {
 
     function login() {
         const { username, password } = loginCredentials
-        Axios.post("https://lifechampserver-production.up.railway.app/getUser", { username, password }).then(res => { setUserData(res.data); setTasks(res.data.current); setPastTasks(res.data.past); localStorage.setItem("LF_userData", JSON.stringify(res.data)) })
+        Axios.post("https://lifechampserver-production.up.railway.app/getUser", { username, password }).then(res => { setUserData(res.data); setTasks(res.data.current); setPastTasks(res.data.past); sessionStorage.setItem("LF_userData", JSON.stringify(res.data)) })
         .then(() => {setUserNotFound(false); setLoginAnimation(true); loggedInTimeout()})
         .catch(err => {
             const msg = err.response.data.message
@@ -88,11 +88,11 @@ export const Login = ({ loggedIn, setUserData, setTasks, setPastTasks }) => {
             <div className="front">
                 <div className="input">
                     <span><LangProvider location="username"/></span>
-                    <input type="text" name="username" onChange={handleLoginChange} />
+                    <input type="text" name="username" maxLength="9" onChange={handleLoginChange} />
                 </div>
                 <div className="input">
                     <span><LangProvider location="password"/></span>
-                    <input type="password" name="password" onChange={handleLoginChange} />
+                    <input type="password" name="password" maxLength="9" onChange={handleLoginChange} />
                 </div>
                 {registered && <span className="login-register-msgs"><LangProvider location="login-new-cred" /></span>}
                 {userNotFound && <span className="login-register-msgs"><LangProvider location="user-not-found" /></span>}

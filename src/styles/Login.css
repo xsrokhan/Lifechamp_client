@@ -170,9 +170,18 @@
 
 @media screen and (max-width: 350px) {
   .container {
-    width: 15rem;
+    width: 16rem;
   }
   .container input {
+    font-size: 0.9rem;
+  }
+  .container button {
     font-size: 1rem;
+  }
+}
+
+@media screen and (max-height: 670px) {
+  .container {
+    height: 26.5rem;
   }
 }
